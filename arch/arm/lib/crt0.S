@@ -89,6 +89,12 @@ ENTRY(_main)
 	mov	r0, #0
 	bl	board_init_f
 
+    ldr r0, =0x1e784000
+    mov r1, #0x7c                                @ '|'
+    str r1, [r0]
+    str r1, [r0]
+    str r1, [r0]
+
 #if ! defined(CONFIG_SPL_BUILD)
 
 /*
@@ -102,16 +108,77 @@ ENTRY(_main)
 	ldr	r8, [r8, #GD_BD]		/* r8 = gd->bd */
 	sub	r8, r8, #GD_SIZE		/* new GD is below bd */
 
+    ldr r0, =0x1e784000
+    mov r1, #0x2b                                @ '+'
+    str r1, [r0]
+    str r1, [r0]
 	adr	lr, here
+
+    ldr r0, =0x1e784000
+    mov r1, #0x3a
+    str r1, [r0]
+    mov r1, #0xa
+    str r1, [r0]
+    mov r1, #0xd
+    str r1, [r0]
+
+    mov r3, lr
+    mov r4, #8
+ua_loop0:
+    and r1, r3, #0xf
+    add r1, r1, #0x30
+    str r1, [r0]
+    subs r4, r4, #1
+    lsr r3, r3, #4
+    bne ua_loop0
+
+    mov r1, #0xa
+    str r1, [r0]
+    mov r1, #0xd
+    str r1, [r0]
+
+
 	ldr	r0, [r8, #GD_RELOC_OFF]		/* r0 = gd->reloc_off */
 	add	lr, lr, r0
+
+    ldr r0, =0x1e784000
+    mov r1, #0x3a
+    str r1, [r0]
+    mov r1, #0xa
+    str r1, [r0]
+    mov r1, #0xd
+    str r1, [r0]
+
+    mov r3, lr
+    mov r4, #8
+ua_loop1:
+    and r1, r3, #0xf
+    add r1, r1, #0x30
+    str r1, [r0]
+    subs r4, r4, #1
+    lsr r3, r3, #4
+    bne ua_loop1
+
+    mov r1, #0xa
+    str r1, [r0]
+    mov r1, #0xd
+    str r1, [r0]
+
 	ldr	r0, [r8, #GD_RELOCADDR]		/* r0 = gd->relocaddr */
 	b	relocate_code
 here:
 
 /* Set up final (full) environment */
 
+    ldr r0, =0x1e784000
+    mov r1, #0x24                                @ '$'
+    str r1, [r0]
+
 	bl	c_runtime_cpu_setup	/* we still call old routine here */
+
+    ldr r0, =0x1e784000
+    mov r1, #0x24                                @ '$'
+    str r1, [r0]
 
 	ldr	r0, =__bss_start	/* this is auto-relocated! */
 	ldr	r1, =__bss_end		/* this is auto-relocated! */
@@ -123,8 +190,16 @@ clbss_l:cmp	r0, r1			/* while not at end of BSS */
 	addlo	r0, r0, #4		/* move to next */
 	blo	clbss_l
 
+    ldr r0, =0x1e784000
+    mov r1, #0x40                                @ '@'
+    str r1, [r0]
+
 	bl coloured_LED_init
 	bl red_led_on
+
+    ldr r0, =0x1e784000
+    mov r1, #0x23                                @ '#'
+    str r1, [r0]
 
 	/* call board_init_r(gd_t *id, ulong dest_addr) */
 	mov	r0, r8			/* gd_t */

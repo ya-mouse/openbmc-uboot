@@ -48,6 +48,11 @@ copy_loop:
 	cmp	r1, r2			/* until source end address [r2]    */
 	blo	copy_loop
 
+    ldr r0, =0x1e784000
+    mov r1, #0x7b                                @ '{'
+    str r1, [r0]
+    str r1, [r0]
+
 	/*
 	 * fix .rel.dyn relocations
 	 */
@@ -70,6 +75,11 @@ fixnext:
 
 relocate_done:
 
+    ldr r0, =0x1e784000
+    mov r1, #0x7d                                @ '}'
+    str r1, [r0]
+    str r1, [r0]
+
 #ifdef __XSCALE__
 	/*
 	 * On xscale, icache must be invalidated and write buffers drained,
@@ -80,6 +90,29 @@ relocate_done:
 #endif
 
 	/* ARMv4- don't know bx lr but the assembler fails to see that */
+    ldr r0, =0x1e784000
+    mov r1, #0xa
+    str r1, [r0]
+    mov r1, #0xd
+    str r1, [r0]
+
+    mov r3, lr
+    mov r4, #8
+ua_loop:
+    and r1, r3, #0xf
+    add r1, r1, #0x30
+    str r1, [r0]
+    subs r4, r4, #1
+    lsr r3, r3, #4
+    bne ua_loop
+
+    mov r1, #0xa
+    str r1, [r0]
+    mov r1, #0xd
+    str r1, [r0]
+
+    mov r1, #0x3e  @ '>'
+    str r1, [r0]
 
 #ifdef __ARM_ARCH_4__
         mov        pc, lr

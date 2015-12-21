@@ -214,6 +214,7 @@ uint32_t ZEXPORT crc32_no_comp(uint32_t crc, const Bytef *buf, uInt len)
 	 } while (--len);
     }
 
+    printf("CRC32: %x (%x)\n", crc, le32_to_cpu(crc));
     return le32_to_cpu(crc);
 }
 #undef DO_CRC

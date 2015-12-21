@@ -182,6 +182,30 @@ reset:
 	bl	cpu_init_crit
 #endif
 
+#define CONFIG_SKIP_RELOCATE_UBOOT 1
+#ifndef CONFIG_SKIP_RELOCATE_UBOOT
+relocate:				/* relocate U-Boot to RAM	    */
+	adr	r0, _start		/* r0 <- current position of code   */
+	ldr	r1, _TEXT_BASE		/* test if we run from flash or RAM */
+	cmp     r0, r1                  /* don't reloc during debug         */
+	beq     call_main
+
+	ldr	r2, =__rel_dyn_end /* __image_copy_end */
+#if 0
+	ldr	r2, _TEXT_BASE
+	ldr	r3, _bss_start_ofs
+	sub	r2, r3, r2		/* r2 <- size of armboot            */
+	add	r2, r0, r2		/* r2 <- source end address         */
+#endif
+
+copy_loop:
+	ldmia	r0!, {r3-r10}		/* copy from source address [r0]    */
+	stmia	r1!, {r3-r10}		/* copy to   target address [r1]    */
+	cmp	r1, r2			/* until source end addreee [r2]    */
+	ble	copy_loop
+#endif	/* CONFIG_SKIP_RELOCATE_UBOOT */
+
+call_main:
 	bl	_main
 
 /*------------------------------------------------------------------------------*/
@@ -300,13 +324,12 @@ flush_dcache:
 	.macro	irq_save_user_regs
 	sub	sp, sp, #S_FRAME_SIZE
 	stmia	sp, {r0 - r12}			@ Calling r0-r12
-	@ !!!! R8 NEEDS to be saved !!!! a reserved stack spot would be good.
-	add	r8, sp, #S_PC
-	stmdb	r8, {sp, lr}^		@ Calling SP, LR
-	str	lr, [r8, #0]		@ Save calling PC
+	add	r7, sp, #S_PC
+	stmdb	r7, {sp, lr}^		@ Calling SP, LR
+	str	lr, [r7, #0]		@ Save calling PC
 	mrs	r6, spsr
-	str	r6, [r8, #4]		@ Save CPSR
-	str	r0, [r8, #8]		@ Save OLD_R0
+	str	r6, [r7, #4]		@ Save CPSR
+	str	r0, [r7, #8]		@ Save OLD_R0
 	mov	r0, sp
 	.endm
 

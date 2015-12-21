@@ -97,8 +97,11 @@ static NS16550_t serial_ports[6] = {
 	static int  eserial##port##_init(void) \
 	{ \
 		int clock_divisor; \
+                (*(volatile uint32_t *)0x1e784000) = '/'; \
 		clock_divisor = calc_divisor(serial_ports[port-1]); \
+                (*(volatile uint32_t *)0x1e784000) = '\\'; \
 		NS16550_init(serial_ports[port-1], clock_divisor); \
+                (*(volatile uint32_t *)0x1e784000) = '|'; \
 		return 0 ; \
 	} \
 	static void eserial##port##_setbrg(void) \
@@ -152,6 +155,14 @@ static int calc_divisor (NS16550_t port)
 #endif
 
 #define MODE_X_DIV 16
+
+#ifdef CONFIG_AST2300
+	if ((*((volatile ulong*) 0x1e6e202c) & (1 << 12)) != 0) {
+		return (CONFIG_SYS_NS16550_CLK + (gd->baudrate * (MODE_X_DIV / 2))) /
+			(MODE_X_DIV * gd->baudrate * 13);
+	}
+#endif
+
 	/* Compute divisor value. Normally, we should simply return:
 	 *   CONFIG_SYS_NS16550_CLK) / MODE_X_DIV / gd->baudrate
 	 * but we need to round that value by adding 0.5.

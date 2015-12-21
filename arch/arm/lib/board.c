@@ -211,16 +211,20 @@ typedef int (init_fnc_t) (void);
 
 int print_cpuinfo(void);
 
-void __dram_init_banksize(void)
+int __dram_init_banksize(void)
 {
+        (*(volatile uint32_t *)0x1e784000) = 'S';
 	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
 	gd->bd->bi_dram[0].size =  gd->ram_size;
+        (*(volatile uint32_t *)0x1e784000) = 'B';
+	return 0;
 }
-void dram_init_banksize(void)
+int dram_init_banksize(void)
 	__attribute__((weak, alias("__dram_init_banksize")));
 
 int __arch_cpu_init(void)
 {
+        (*(volatile uint32_t *)0x1e784000) = '%';
 	return 0;
 }
 int arch_cpu_init(void)
@@ -228,6 +232,7 @@ int arch_cpu_init(void)
 
 int __power_init_board(void)
 {
+        (*(volatile uint32_t *)0x1e784000) = 'P';
 	return 0;
 }
 int power_init_board(void)
@@ -277,6 +282,7 @@ init_fnc_t *init_sequence[] = {
 
 void board_init_f(ulong bootflag)
 {
+	int i;
 	bd_t *bd;
 	init_fnc_t **init_fnc_ptr;
 	gd_t *id;
@@ -301,11 +307,16 @@ void board_init_f(ulong bootflag)
 	gd->fdt_blob = (void *)getenv_ulong("fdtcontroladdr", 16,
 						(uintptr_t)gd->fdt_blob);
 
-	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
+        (*(volatile uint32_t *)0x1e784000) = '>';
+	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr, ++i) {
+//                (*(volatile uint32_t *)0x1e784000) = 0x30+i;
 		if ((*init_fnc_ptr)() != 0) {
+			(*(volatile uint32_t *)0x1E784000) = '!';
 			hang ();
 		}
+//                (*(volatile uint32_t *)0x1e784000) = '+';
 	}
+        (*(volatile uint32_t *)0x1e784000) = '#';
 
 #ifdef CONFIG_OF_CONTROL
 	/* For now, put this check after the console is ready */
@@ -362,9 +373,17 @@ void board_init_f(ulong bootflag)
 	/* round down to next 64 kB limit */
 	addr &= ~(0x10000 - 1);
 
+        (*(volatile uint32_t *)0x40000000) = 0x30;
+        (*(volatile uint32_t *)0x40000004) = 0x31;
+        (*(volatile uint32_t *)0x40000008) = 0x32;
+
+        (*(volatile uint32_t *)0x1e784000) = (*(volatile uint32_t *)0x40000000) & 0xff;
+        (*(volatile uint32_t *)0x1e784000) = (*(volatile uint32_t *)0x40000004) & 0xff;
+        (*(volatile uint32_t *)0x1e784000) = (*(volatile uint32_t *)0x40000008) & 0xff;
+
 	gd->arch.tlb_addr = addr;
 	debug("TLB table from %08lx to %08lx\n", addr, addr + gd->arch.tlb_size);
-#endif
+#endif 
 
 	/* round down to next 4 kB limit */
 	addr &= ~(4096 - 1);
@@ -524,6 +543,10 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	ulong flash_size;
 #endif
 
+        (*(volatile uint32_t *)0x1e784000) = 0x41;
+        (*(volatile uint32_t *)0x1e784000) = 0x42;
+        (*(volatile uint32_t *)0x1e784000) = 0x43;
+
 	gd->flags |= GD_FLG_RELOC;	/* tell others: relocation done */
 	bootstage_mark_name(BOOTSTAGE_ID_START_UBOOT_R, "board_init_r");
 
@@ -531,6 +554,8 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	/* Enable caches */
 	enable_caches();
+
+        (*(volatile uint32_t *)0x1e784000) = 0x44;
 
 	debug("monitor flash len: %08lX\n", monitor_flash_len);
 	board_init();	/* Setup chipselects */
