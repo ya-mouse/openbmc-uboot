@@ -79,14 +79,14 @@ extern void dataflash_print_info(void);
  * May be supplied by boards if desired
  */
 __weak void coloured_LED_init(void) {}
-__weak void __red_led_on(void) {}
-__weak void __red_led_off(void) {}
-__weak void __green_led_on(void) {}
-__weak void __green_led_off(void) {}
-__weak void __yellow_led_on(void) {}
-__weak void __yellow_led_off(void) {}
-__weak void __blue_led_on(void) {}
-__weak void __blue_led_off(void) {}
+__weak void red_led_on(void) {}
+__weak void red_led_off(void) {}
+__weak void green_led_on(void) {}
+__weak void green_led_off(void) {}
+__weak void yellow_led_on(void) {}
+__weak void yellow_led_off(void) {}
+__weak void blue_led_on(void) {}
+__weak void blue_led_off(void) {}
 
 /*
  ************************************************************************
