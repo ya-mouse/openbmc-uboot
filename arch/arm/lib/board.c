@@ -73,6 +73,21 @@ extern void dataflash_print_info(void);
 #include <i2c.h>
 #endif
 
+/************************************************************************
+ * Coloured LED functionality
+ ************************************************************************
+ * May be supplied by boards if desired
+ */
+__weak void coloured_LED_init(void)
+__weak void __red_led_on(void) {}
+__weak void __red_led_off(void) {}
+__weak void __green_led_on(void) {}
+__weak void __green_led_off(void) {}
+__weak void __yellow_led_on(void) {}
+__weak void __yellow_led_off(void) {}
+__weak void __blue_led_on(void) {}
+__weak void __blue_led_off(void) {}
+
 /*
  ************************************************************************
  * Init Utilities							*
