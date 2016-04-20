@@ -27,7 +27,6 @@
  */
 //#define CONFIG_INIT_CRITICAL			/* define for U-BOOT 1.1.1 */
 #undef  CONFIG_INIT_CRITICAL			/* undef for  U-BOOT 1.1.4 */ 
-//#define CONFIG_FPGA_ASPEED	1
 #define CONFIG_ARM926EJS	1		/* This is an arm926ejs CPU */
 #define	CONFIG_ASPEED		1
 #define CONFIG_AST2400		1
@@ -37,11 +36,12 @@
 //#define CONFIG_2SPIFLASH			/* Boot SPI: CS2, 2nd SPI: CS0 */
 #undef CONFIG_2SPIFLASH
 #undef CONFIG_ASPEED_SLT
+#undef CONFIG_SKIP_LOWLEVEL_INIT
 #define CONFIG_FLASH_AST2300
-//#define CONFIG_FLASH_AST2300_DMA
+#define CONFIG_FLASH_AST2300_DMA
 //#define CONFIG_FLASH_SPIx2_Dummy
 //#define CONFIG_FLASH_SPIx4_Dummy
-#define CONFIG_CRT_DISPLAY	1		/* undef if not support CRT */
+#undef CONFIG_CRT_DISPLAY			/* undef if not support CRT */
 
 //#define CONFIG_USE_IRQ				/* we don't need IRQ/FIQ stuff */
 #define CONFIG_MISC_INIT_R 
@@ -90,18 +90,29 @@
 #define CONFIG_CMDLINE_TAG	 1		/* enable passing of ATAGs	*/
 #define CONFIG_SETUP_MEMORY_TAGS 1
 #define CONFIG_INITRD_TAG	 1
-#define	CONFIG_BOOTARGS 	"debug console=ttyS0,115200n8 ramdisk_size=16384 root=/dev/ram rw init=/linuxrc mem=80M"
-#define CONFIG_UPDATE           "tftp 40800000 ast2400.scr; so 40800000'"
+#define	CONFIG_BOOTARGS 	"root=/dev/ram0 rw initrd=0x42600000,0xd00000 ramdisk_size=13312 mem=112M console=ttyS0,115200n8 rootfstype=squashfs debug verbose panic=30"
+#define CONFIG_UPDATE           "tftp 40800000 ast2300.scr; so 40800000'"
 
-#define CONFIG_BOOTDELAY	3		/* autoboot after 3 seconds	*/
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"kernel_load=41400000\0" \
+	"kernel_start=14100000\0" \
+	"kernel_size=200000\0" \
+	"rootfs_load=42600000\0" \
+	"rootfs_start=14300000\0" \
+	"rootfs_size=D00000\0"
+
+#define CONFIG_MACH_TYPE	0x232c
+
+#define CONFIG_BOOTDELAY	5		/* autoboot after 3 seconds	*/
+#define CONFIG_ZERO_BOOTDELAY_CHECK 1
 #ifdef CONFIG_FLASH_AST2300
-#define CONFIG_BOOTCOMMAND	"bootm 20080000 20300000"
+# define CONFIG_BOOTCOMMAND	"bootm 14100000 14300000"
 #else
-#ifdef	CONFIG_SYS_FLASH_CFI 
-#define CONFIG_BOOTCOMMAND	"bootm 10080000 10300000"
-#else
-#define CONFIG_BOOTCOMMAND	"bootm 14080000 14300000"
-#endif
+# ifdef	CONFIG_SYS_FLASH_CFI 
+#   define CONFIG_BOOTCOMMAND	"bootm 10080000 10300000"
+# else
+#   define CONFIG_BOOTCOMMAND	"bootm 14080000 14300000"
+# endif
 #endif
 #define CONFIG_BOOTFILE		"all.bin"
 #define CONFIG_ENV_OVERWRITE
@@ -118,8 +129,7 @@
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_EEPROM
-#define CONFIG_CMD_NETTEST
-#define CONFIG_CMD_SLT
+#define CONFIG_CMDLINE_EDITING
 
 /* 
  * CPU Setting
@@ -144,70 +154,71 @@
  */
 #define CONFIG_NR_DRAM_BANKS	1	   	/* we have 1 bank of DRAM */
 #define PHYS_SDRAM_1		0x40000000 	/* SDRAM Bank #1 */
-#define PHYS_SDRAM_1_SIZE	0x4000000 	/* 64 MB */
+#define PHYS_SDRAM_1_SIZE	0x8000000 	/* 128 MB */
 
 #define CONFIG_SYS_SDRAM_BASE	0x40000000
+
+#define CONFIG_MONITOR_BASE		TEXT_BASE
+#define CONFIG_MONITOR_LEN		(192 << 10)
 
 /*
  * FLASH Configuration
  */
+
 #ifdef CONFIG_SYS_FLASH_CFI				/* NOR Flash */
 
-#ifdef CONFIG_FLASH_AST2300
-#define PHYS_FLASH_1			0x20000000 	/* Flash Bank #1 */
-#else
-#define PHYS_FLASH_1			0x10000000 	/* Flash Bank #1 */
-#endif
+# ifdef CONFIG_FLASH_AST2300
+#   define PHYS_FLASH_1			0x20000000 	/* Flash Bank #1 */
+# else
+#   define PHYS_FLASH_1			0x10000000 	/* Flash Bank #1 */
+# endif
 
-#define CONFIG_SYS_FLASH_BASE		PHYS_FLASH_1
-#define CONFIG_FLASH_BANKS_LIST 	{ PHYS_FLASH_1 }
+# define CONFIG_SYS_FLASH_BASE		PHYS_FLASH_1
+# define CONFIG_FLASH_BANKS_LIST 	{ PHYS_FLASH_1 }
 
-#define CONFIG_SYS_MAX_FLASH_BANKS 	1
-#define CONFIG_SYS_MAX_FLASH_SECT	(256)		/* max number of sectors on one chip */
+# define CONFIG_SYS_MAX_FLASH_BANKS 	1
+# define CONFIG_SYS_MAX_FLASH_SECT	(256)		/* max number of sectors on one chip */
 
-#define CONFIG_ENV_IS_IN_FLASH	1
-#define CONFIG_ENV_OFFSET					0x60000 	/* environment starts here  */
-#define CONFIG_ENV_SIZE					0x20000 	/* Total Size of Environment Sector */
+# define CONFIG_ENV_IS_IN_FLASH	1
+# define CONFIG_ENV_OFFSET			0x60000 	/* environment starts here  */
+# define CONFIG_ENV_SIZE			0x20000 	/* Total Size of Environment Sector */
 
-#define CONFIG_SYS_FLASH_CFI_AMD_RESET
-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
+# define CONFIG_SYS_FLASH_CFI_AMD_RESET
+# define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 
 #else						/* SPI Flash */
 
-#ifdef CONFIG_FLASH_AST2300
-#define PHYS_FLASH_1		0x20000000 	/* Flash Bank #1 */
-#else
-#define PHYS_FLASH_1		0x14000000 	/* Flash Bank #1 */
-#define PHYS_FLASH_2		0x14800000 	/* Flash Bank #2 */
-#define PHYS_FLASH_2_BASE	0x10000000
+# ifdef CONFIG_FLASH_AST2300
+#   define PHYS_FLASH_1		0x20000000 	/* Flash Bank #1 */
+# else
+#   define PHYS_FLASH_1		0x14000000 	/* Flash Bank #1 */
+#   define PHYS_FLASH_2		0x14800000 	/* Flash Bank #2 */
+#   define PHYS_FLASH_2_BASE	0x10000000
+# endif
+
+# ifdef CONFIG_2SPIFLASH
+#   define CONFIG_SYS_FLASH_BASE		PHYS_FLASH_2_BASE
+#   define CONFIG_FLASH_BANKS_LIST 	{ PHYS_FLASH_1, PHYS_FLASH_2 }
+#   define CONFIG_SYS_MAX_FLASH_BANKS 	2
+#   define CONFIG_SYS_MAX_FLASH_SECT	(1024)		/* max number of sectors on one chip */
+
+#   define CONFIG_ENV_IS_IN_FLASH		1
+#   define CONFIG_ENV_OFFSET		0x7F0000 	/* environment starts here  */
+#   define CONFIG_ENV_SIZE			0x010000 	/* Total Size of Environment Sector */
+# else
+#   define CONFIG_SYS_FLASH_BASE		PHYS_FLASH_1
+#   define CONFIG_FLASH_BANKS_LIST 	{ PHYS_FLASH_1 }
+#   define CONFIG_SYS_MAX_FLASH_BANKS 	1
+#   define CONFIG_SYS_MAX_FLASH_SECT	(1024)		/* max number of sectors on one chip */
+
+#   define CONFIG_ENV_IS_IN_FLASH		1
+#   define CONFIG_ENV_OFFSET		 0x030000 /* (CONFIG_SYS_FLASH_BASE+CONFIG_MONITOR_LEN)	 environment starts here  */
+#   define CONFIG_ENV_SIZE		(0x002000 - 4)	/* Total Size of Environment Sector */
+# endif
+
 #endif
 
-#ifdef CONFIG_2SPIFLASH
-#define CONFIG_SYS_FLASH_BASE		PHYS_FLASH_2_BASE
-#define CONFIG_FLASH_BANKS_LIST 	{ PHYS_FLASH_1, PHYS_FLASH_2 }
-#define CONFIG_SYS_MAX_FLASH_BANKS 	2
-#define CONFIG_SYS_MAX_FLASH_SECT	(1024)		/* max number of sectors on one chip */
-
-#define CONFIG_ENV_IS_IN_FLASH		1
-#define CONFIG_ENV_OFFSET		0x7F0000 	/* environment starts here  */
-#define CONFIG_ENV_SIZE			0x010000 	/* Total Size of Environment Sector */
-#else
-#define CONFIG_SYS_FLASH_BASE		PHYS_FLASH_1
-#define CONFIG_FLASH_BANKS_LIST 	{ PHYS_FLASH_1 }
-#define CONFIG_SYS_MAX_FLASH_BANKS 	1
-#define CONFIG_SYS_MAX_FLASH_SECT	(1024)		/* max number of sectors on one chip */
-
-#define CONFIG_ENV_IS_IN_FLASH		1
-#define CONFIG_ENV_OFFSET		0x7F0000 	/* environment starts here  */
-#define CONFIG_ENV_SIZE			0x010000 	/* Total Size of Environment Sector */
-#endif
-
-#endif
-
-#define __LITTLE_ENDIAN
-
-#define CONFIG_MONITOR_BASE		TEXT_BASE
-#define CONFIG_MONITOR_LEN		(192 << 10)
+#define __LITTLE_ENDIAN			1
 
 /* timeout values are in ticks */
 #define CONFIG_SYS_FLASH_ERASE_TOUT	(20*CONFIG_SYS_HZ) 	/* Timeout for Flash Erase */
@@ -230,25 +241,32 @@
 #define	CONFIG_SYS_CLKS_IN_HZ		/* everything, incl board info, in Hz */
 #undef	CONFIG_SYS_CLKS_IN_HZ		/* everything, incl board info, in Hz */
 
-#define CONFIG_SYS_LOAD_ADDR		0x43000000	/* default load address */
+#define CONFIG_SYS_LOAD_ADDR		0x41000000	/* default load address */
 
 #define CONFIG_SYS_TIMERBASE		0x1E782000	/* use timer 1 */
 #define CONFIG_SYS_HZ			(1*1000*1000)	/* use external clk (1M) */
+#define CONFIG_ASPEED_TIMER_CLK (1*1000*1000) /* use external clk (1M) */
 
 /*
  * Serial Configuration
  */
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
-#define CONFIG_SYS_NS16550_REG_SIZE	4
+#define CONFIG_SYS_NS16550_REG_SIZE	-4
+#define	CONFIG_SYS_NS16550_MEM32	1
 #define CONFIG_SYS_NS16550_CLK		24000000
 #define CONFIG_SYS_NS16550_COM1		0x1e783000
 #define CONFIG_SYS_NS16550_COM2		0x1e784000
+#define CONFIG_SYS_NS16550_COM3		0x1e78e000
 #define	CONFIG_SYS_LOADS_BAUD_CHANGE
 #define CONFIG_SERIAL1			1
 #define CONFIG_CONS_INDEX		2
-#define CONFIG_BAUDRATE			115200
+#define CONFIG_BAUDRATE			38400 // 115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
+#define CONFIG_ASPEED_COM 0x1e784000 // COM2
+#define CONFIG_ASPEED_COM_IER (CONFIG_ASPEED_COM + 0x4)
+#define CONFIG_ASPEED_COM_IIR (CONFIG_ASPEED_COM + 0x8)
+#define CONFIG_ASPEED_COM_LCR (CONFIG_ASPEED_COM + 0xc)
 
 /*
  * USB device configuration
@@ -268,7 +286,7 @@
  */
 #define CONFIG_HARD_I2C
 #define CONFIG_SYS_I2C_SPEED		100000
-#define CONFIG_SYS_I2C_SLAVE		1
+#define CONFIG_SYS_I2C_SLAVE		0x20
 #define CONFIG_DRIVER_ASPEED_I2C
 
 /*
@@ -283,8 +301,9 @@
 #define __BYTE_ORDER __LITTLE_ENDIAN
 #define __LITTLE_ENDIAN_BITFIELD
 #define CONFIG_MAC_PARTITION
-#define CONFIG_ASPEEDNIC
-#define CONFIG_MAC1_PHY_LINK_INTERRUPT
+#define CONFIG_ASPEED_ETH
+#define CONFIG_SPX_FEATURE_GLOBAL_NIC_COUNT 2
+//#define CONFIG_MAC1_PHY_LINK_INTERRUPT
 #define CONFIG_MAC2_ENABLE
 #define CONFIG_MAC2_PHY_LINK_INTERRUPT
 /*
@@ -307,16 +326,27 @@
 */
 #define CONFIG_MAC1_PHY_SETTING		0
 #define CONFIG_MAC2_PHY_SETTING		0
+#define CONFIG_MII 1
+#define CONFIG_CMD_MII 1
+#define CONFIG_CMD_DHCP 1
+#define CONFIG_PHYLIB 1
+#define CONFIG_ASPEED_MAC_NUMBER  2
+#define CONFIG_ASPEED_MAC_CONFIG  1 // config MAC2
+#define _PHY_SETTING_CONCAT(mac) CONFIG_MAC##mac##_PHY_SETTING
+#define _GET_MAC_PHY_SETTING(mac) _PHY_SETTING_CONCAT(mac)
+#define CONFIG_ASPEED_MAC_PHY_SETTING \
+  _GET_MAC_PHY_SETTING(CONFIG_ASPEED_MAC_CONFIG)
 #define CONFIG_MAC_INTERFACE_CLOCK_DELAY	0x2255
 #define CONFIG_NET_MULTI
-#define CONFIG_ETHACT			aspeednic#0
+#define CONFIG_RANDOM_MACADDR
+/*
 #define CONFIG_GATEWAYIP		192.168.0.1
 #define CONFIG_NETMASK			255.255.255.0
 #define CONFIG_IPADDR			192.168.0.45
 #define CONFIG_SERVERIP			192.168.0.81
 #define CONFIG_ETHADDR			00:C0:A8:12:34:56
 #define CONFIG_ETH1ADDR			00:C0:A8:12:34:57
-
+*/
 /*
  * SLT
  */
@@ -324,5 +354,7 @@
 #define CONFIG_SLT
 #define CFG_CMD_SLT		(CFG_CMD_VIDEOTEST | CFG_CMD_MACTEST | CFG_CMD_HACTEST | CFG_CMD_MICTEST)
 */
+
+#define CONFIG_SYS_INIT_SP_ADDR (CONFIG_SYS_SDRAM_BASE + 0x1000 - GENERATED_GBL_DATA_SIZE)
 
 #endif	/* __CONFIG_H */

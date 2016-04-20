@@ -9,5 +9,8 @@
 # MA 02111-1307 USA
 #
 
+# RAM version
+#CONFIG_SYS_TEXT_BASE = 0x41000000
+
 # SPI flash is mapped to 0x00000000 initially
 CONFIG_SYS_TEXT_BASE = 0x00000000

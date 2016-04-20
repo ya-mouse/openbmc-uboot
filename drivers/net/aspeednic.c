@@ -1151,7 +1151,9 @@ static void aspeednic_probe_phy(struct eth_device *dev)
       break;
     }
   }
+#if !defined(CONFIG_AST2400)
   g_phy_addr = phy_addr = 0x1f;
+#endif
   printf("%s: PHY at 0x%02x\n", dev->name, phy_addr);
 }
 

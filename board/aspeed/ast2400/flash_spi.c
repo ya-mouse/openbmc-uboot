@@ -1,4 +1,9 @@
 /*
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
@@ -88,13 +93,13 @@ flash_info_t flash_info[CONFIG_SYS_MAX_FLASH_BANKS];		/* FLASH chips info */
 #define AT25DF321		0x01471F
 
 /* SPI Define */
+#define SCU_REVISION_REGISTER		0x1e6e207c
 #if	defined(CONFIG_FLASH_AST2300) || defined(CONFIG_AST1300)
 #if	defined(CONFIG_AST1300)
 #define STCBaseAddress			0x00620000
 #else
 #define STCBaseAddress			0x1e620000
 #endif
-#define SCU_REVISION_REGISTER		0x1e6e207c
 #define SCU_CACHE_CTRL_REGISTER		0x1e6e2118
 
 #define SPICtrlRegOffset		0x10
@@ -528,6 +533,7 @@ static ulong flash_get_size (ulong base, int banknum)
 	int j;
 	unsigned long sector;
 	int erase_region_size;
+	int erase_region_count;
         ulong ulCtrlData, CtrlOffset;
         ulong ulID;
         uchar ch[3];
@@ -562,6 +568,7 @@ static ulong flash_get_size (ulong base, int banknum)
         }    
 #endif
             
+        printf("VBASE %x STC %x Ctrl %x CE %d\n", vbase, STCBaseAddress, CtrlOffset, info->CE);
         /* Get Flash ID */
         ulCtrlData  = *(ulong *) (STCBaseAddress + CtrlOffset) & CMD_MASK;        
         ulCtrlData |= CE_LOW | USERMODE;
@@ -619,17 +626,17 @@ static ulong flash_get_size (ulong base, int banknum)
             break;
             
         case N25Q128:
-	    info->sector_count = 256;
-	    info->size = 0x1000000;        	
+            info->sector_count = 256;
+            info->size = 0x1000000;
             erase_region_size  = 0x10000;
-            info->readcmd = 0x0b;            
+            info->readcmd = 0x0b;
             info->dualport = 0;
             info->dummybyte = 1;
-            info->buffersize = 256;            
+            info->buffersize = 256;
             WriteClk = 50;
             EraseClk = 20;
             ReadClk  = 50;
-	    break;
+            break;
 
         case N25Q256:
 	    info->sector_count = 256;
@@ -846,6 +853,7 @@ AST2300 A0 SPI can't run faster than 50Mhz
             EraseClk = 20;
             ReadClk  = 50;
 
+#if	defined(CONFIG_FLASH_AST2300) || defined(CONFIG_AST1300)
             SCURevision = *(ulong *) (SCU_REVISION_REGISTER);
             if (((SCURevision >> 24) & 0xff) == 0x01) { //AST2300
             	if (((SCURevision >> 16) & 0xff) == 0x00) { //A0
@@ -854,7 +862,6 @@ AST2300 A0 SPI can't run faster than 50Mhz
             		ReadClk  = 25;
             	}
             }
-#if	defined(CONFIG_FLASH_AST2300) || defined(CONFIG_AST1300)
 #if	defined(CONFIG_FLASH_SPIx2_Dummy)
             info->readcmd = 0xbb;            
             info->dummybyte = 1;
@@ -1065,7 +1072,8 @@ AST2300 A0 SPI can't run faster than 50Mhz
             } /* JDEC */        
         }
         				
-        debug ("erase_region_size = %d\n", erase_region_size);
+        debug ("erase_region_count = %d erase_region_size = %d\n",
+		erase_region_count, erase_region_size);
 
 	sector = base;			
 	for (j = 0; j < info->sector_count; j++) {

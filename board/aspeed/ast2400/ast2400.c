@@ -327,6 +327,8 @@ int board_eth_init(bd_t *bis)
   int ret = -1;
 #if defined(CONFIG_ASPEEDNIC)
   ret = aspeednic_initialize(bis);
+#elif defined(CONFIG_ASPEED_ETH)
+  ret = ast_eth_initialize(bis);
 #else
   printf("No ETH, ");
 #endif
