@@ -14,6 +14,10 @@
 #include <command.h>
 #include <pci.h>
 
+#define AHB_REG_BASE		0x1E600000
+#define AHB_UNLOCK_MAGIC 	0xAEED1A03
+#define AHB_REMAP_REG		0x8C
+
 int board_init (void)
 {
     DECLARE_GLOBAL_DATA_PTR;
@@ -21,80 +25,48 @@ int board_init (void)
 	unsigned long gpio;
 	unsigned long reg;
 
-    /* AHB Controller */
-    *((volatile ulong*) 0x1E600000)  = 0xAEED1A03;	/* unlock AHB controller */
-    *((volatile ulong*) 0x1E60008C) |= 0x01;		/* map DRAM to 0x00000000 */
+    *((volatile ulong *) AHB_REG_BASE) = AHB_UNLOCK_MAGIC; /* unlock AHB controller */
+    *((volatile ulong *) (AHB_REG_BASE + AHB_REMAP_REG)) = 0x01; /* memory remap */
+    *((volatile ulong *) AHB_REG_BASE) = 0; /* lock AHB controller */
 
     /* Flash Controller */
 #ifdef	CONFIG_FLASH_AST2300
     *((volatile ulong*) 0x1e620000) |= 0x800f0000;	/* enable Flash Write */
 #else
-    *((volatile ulong*) 0x16000000) |= 0x00001c00;	/* enable Flash Write */
+    *((volatile ulong*) AST_SMC_BASE) |= 0x00001c00; /* enable Flash Write */
 #endif
 
-    /* SCU */
-    *((volatile ulong*) 0x1e6e2000) = 0x1688A8A8;	/* unlock SCU */
-	reg = *((volatile ulong*) 0x1e6e2008);
-	reg &= 0x1c0fffff;
-	reg |= 0x61800000;				/* PCLK  = HPLL/8 */
-#ifdef CONFIG_AST1070
-	//check lpc or lpc+ mode
-////////////////////////////////////////////////////////////////////////
-	gpio = *((volatile ulong*) 0x1e780070);		/* mode check */
-	if(gpio & 0x2)
-		reg |= 0x100000;				/* LHCLK = HPLL/4 */
-	else
-		reg |= 0x300000;				/* LHCLK = HPLL/8 */
+    *((volatile ulong*) SCU_KEY_CONTROL_REG) = 0x1688A8A8; /* unlock SCU */
 
-	reg |= 0x80000; 				/* enable LPC Host Clock */
+    reg = *((volatile ulong*) SCU_CLK_SELECT_REG); /* LHCLK = HPLL/8 */
+    reg &= 0x1c0fffff; /* PCLK  = HPLL/8 */
+    reg |= 0x61b00000; /* BHCLK = HPLL/8 */
+    *((volatile ulong*) SCU_CLK_SELECT_REG) = reg;
 
-    *((volatile ulong*) 0x1e6e2008) = reg;
+    reg = *((volatile ulong*) SCU_CLK_STOP_REG); /* enable 2D Clk */
+    reg &= 0xFFFFFFFD;
+    *((volatile ulong*) SCU_CLK_STOP_REG) = reg;
 
-	reg = *((volatile ulong*) 0x1e6e200c);		/* enable LPC clock */
-	*((volatile ulong*) 0x1e6e200c) &= ~(1 << 28);
+    /* Enable the reference clock divider (div13) for UART1 and UART2 */
+    *((volatile unsigned long *) SCU_MISC_CONTROL_REG) |= 0x1000;
 
-	if(gpio & 0x2) {
+    /* Fix Console bug on DOS SCU90: Enable I2C3~14*/ //Disable I2C6 AIYAM015
+    *(volatile u32 *) (AST_SCU_VA_BASE + 0x90) |= 0xFF7A000;
 
-		//use LPC+ for sys clk
-		// set OSCCLK = VPLL1
-		*((volatile ulong*) 0x1e6e2010) = 0x18;
+    /* Enable SPICS1# or EXTRST# function pin SCU80[15]=1 */
+    /* Fix Console bug on DOS SCU80: Enable UART3 and UART4 setting*/
+    *(volatile u32 *) (AST_SCU_VA_BASE + 0x80) |= 0xFFFF8000;
 
-		// enable OSCCLK
-		reg = *((volatile ulong*) 0x1e6e202c);
-		reg |= 0x00000002;
-		*((volatile ulong*) 0x1e6e202c) = reg;
-	} else {
-		// USE LPC use D2 clk
-		/*set VPPL1 */
-	    *((volatile ulong*) 0x1e6e201c) = 0x6420;
+    /* Fix Console bug on DOS SCU84: Enable UART1 and UART2 setting , Enable VGA setting*/
+    *(volatile u32 *) (AST_SCU_VA_BASE + 0x84) |= 0xFFFFF000;
 
-		// set d2-pll & enable d2-pll D[21:20], D[4]
-	    reg = *((volatile ulong*) 0x1e6e202c);
-	    reg &= 0xffcfffef;
-	    reg |= 0x00200010;
-	    *((volatile ulong*) 0x1e6e202c) = reg;
+    /* Enable external SOC reset function SCU3C[3]=1 */
+    *(volatile u32 *) (AST_SCU_VA_BASE + 0x3C) |= 0x8;
 
-		// set OSCCLK = VPLL1
-	    *((volatile ulong*) 0x1e6e2010) = 0x8;
-
-		// enable OSCCLK
-	    reg = *((volatile ulong*) 0x1e6e202c);
-	    reg &= 0xfffffffd;
-	    reg |= 0x00000002;
-	    *((volatile ulong*) 0x1e6e202c) = reg;
-	}
-#else
-	*((volatile ulong*) 0x1e6e2008) = reg;
-#endif
-    reg = *((volatile ulong*) 0x1e6e200c);		/* enable 2D Clk */
-    *((volatile ulong*) 0x1e6e200c) &= 0xFFFFFFFD;
-/* enable wide screen. If your video driver does not support wide screen, don't
-enable this bit 0x1e6e2040 D[0]*/
-    reg = *((volatile ulong*) 0x1e6e2040);
-    *((volatile ulong*) 0x1e6e2040) |= 0x01;
+    *((volatile ulong*) SCU_KEY_CONTROL_REG) = 0; /* lock SCU */
 
     /* arch number */
-    gd->bd->bi_arch_number = MACH_TYPE_ASPEED;
+    gd->bd->bi_arch_number = 900; //MACH_TYPE_ASPEED;
 
     /* adress of boot parameters */
     gd->bd->bi_boot_params = 0x40000100;
@@ -300,6 +272,14 @@ int misc_init_r(void)
 #ifdef	CONFIG_PCI
     pci_init ();
 #endif
+
+	if ((*((volatile ulong*) 0x1e6e202c) & (1 << 12)) != 0) {
+	    printf("Serial DIV(%ld*13): %d\n", CONFIG_SYS_NS16550_CLK, (CONFIG_SYS_NS16550_CLK + (gd->baudrate * (MODE_X_DIV / 2))) /
+			(MODE_X_DIV * gd->baudrate * 13));
+	} else {
+	    printf("Serial DIV: %d\n", (CONFIG_SYS_NS16550_CLK + (gd->baudrate * (MODE_X_DIV / 2))) /
+			(MODE_X_DIV * gd->baudrate ));
+        }
 
     if (getenv ("verify") == NULL) {
 	setenv ("verify", "n");
