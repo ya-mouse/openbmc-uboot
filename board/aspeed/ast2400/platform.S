@@ -17,7 +17,7 @@
  *
  * Gary Hsu, <gary_hsu@aspeedtech.com>
  *
- * Release date: 2014.12.29 formal release for SDK0.60
+ * Release date: 2015.02.09 formal release for SDK0.61
  *
  * Modified list from v0.23
  * EC1. Modify DQIDLY and DQSI-MCLK2X calibration algorithm
@@ -44,6 +44,9 @@
  * Modified list from v0.59
  * EC1. Add DQS input gating window delay tuning (1/2 T) when CBR retry
  * EC2. Modify DLL1 MAdj = 0x4C
+ *
+ * Modified list from v0.60
+ * EC1. Modify DDR2 init preliminary size to 1Gbit, and BL=4.
  *
  * Optional define variable
  * 1. DRAM Speed             //
@@ -788,7 +791,7 @@ ddr2_init:
 /* Debug - UART console message */
 
     ldr r0, =0x1e6e0004
-    ldr r1, =0x00000510                          @ Default set to 512Mbit
+    ldr r1, =0x00000521                          @ Default set to 1Gbit
     str r1, [r0]
 
     ldr r0, =0x1e6e0010                          @ REG_AC1
@@ -869,9 +872,9 @@ delay2_4:
     orr r2, r2, r1
 
     ldr r0, =0x1e6e002c                          @ REG_MRS
-    ldr r1, =0x00000D03                          @ 408 MHz
+    ldr r1, =0x00000D02                          @ 408 MHz
 #if defined(CONFIG_DRAM_336)
-    ldr r1, =0x00000B03
+    ldr r1, =0x00000B02
 #endif
     orr r1, r1, r2
     str r1, [r0]
@@ -904,9 +907,9 @@ delay2_4:
     str r1, [r0]
 
     ldr r0, =0x1e6e002c                          @ REG_MRS
-    ldr r1, =0x00000C03                          @ 408 MHz
+    ldr r1, =0x00000C02                          @ 408 MHz
 #if defined(CONFIG_DRAM_336)
-    ldr r1, =0x00000A03
+    ldr r1, =0x00000A02
 #endif
     orr r1, r1, r2
     str r1, [r0]
@@ -2551,11 +2554,11 @@ check_dram_size_end:
  Version Number
  *****************************************************************************/
     ldr   r0, =0x1e7200a8
-    ldr   r1, =0x20141229                        @ released date
+    ldr   r1, =0x20150209                        @ released date
     str   r1, [r0]
 
     add   r0, r0, #4
-    ldr   r1, =0x00000060                        @ released SDK version
+    ldr   r1, =0x00000061                        @ released SDK version
     str   r1, [r0]
 
 /******************************************************************************
@@ -2738,13 +2741,11 @@ ECC_Init_Flag:
     orr r1, r1, #0x08
     str r1, [r0]
 
-#ifndef CONFIG_ASPEED_ENABLE_JTAG
     ldr r0, =0x1e6e2004
     ldr r1, [r0]
     ldr r2, =0xFFBFFFFF                          @ Enable JTAG Master, solve ARM stucked by JTAG issue
     and r1, r1, r2
     str r1, [r0]
-#endif
 
     ldr r0, =0x1e6e2048                          @ Set MAC interface delay timing
     ldr r1, =0x2255
