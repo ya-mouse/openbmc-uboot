@@ -13,6 +13,7 @@
 #include <asm/io.h>
 #include <command.h>
 #include <pci.h>
+#include "ast2400_hw.h"
 
 #define AHB_REG_BASE		0x1E600000
 #define AHB_UNLOCK_MAGIC 	0xAEED1A03
@@ -21,9 +22,7 @@
 int board_init (void)
 {
     DECLARE_GLOBAL_DATA_PTR;
-	unsigned char data;
-	unsigned long gpio;
-	unsigned long reg;
+    unsigned long reg;
 
     *((volatile ulong *) AHB_REG_BASE) = AHB_UNLOCK_MAGIC; /* unlock AHB controller */
     *((volatile ulong *) (AHB_REG_BASE + AHB_REMAP_REG)) = 0x01; /* memory remap */
@@ -40,7 +39,7 @@ int board_init (void)
 
     reg = *((volatile ulong*) SCU_CLK_SELECT_REG); /* LHCLK = HPLL/8 */
     reg &= 0x1c0fffff; /* PCLK  = HPLL/8 */
-    reg |= 0x61b00000; /* BHCLK = HPLL/8 */
+    reg |= 0x61b00000; /* BHCLK = HPLL/8 */ /* 0x61b0 and 0x6180 */
     *((volatile ulong*) SCU_CLK_SELECT_REG) = reg;
 
     reg = *((volatile ulong*) SCU_CLK_STOP_REG); /* enable 2D Clk */
@@ -50,6 +49,7 @@ int board_init (void)
     /* Enable the reference clock divider (div13) for UART1 and UART2 */
     *((volatile unsigned long *) SCU_MISC_CONTROL_REG) |= 0x1000;
 
+#if 0
     /* Fix Console bug on DOS SCU90: Enable I2C3~14*/ //Disable I2C6 AIYAM015
     *(volatile u32 *) (AST_SCU_VA_BASE + 0x90) |= 0xFF7A000;
 
@@ -64,6 +64,7 @@ int board_init (void)
     *(volatile u32 *) (AST_SCU_VA_BASE + 0x3C) |= 0x8;
 
     *((volatile ulong*) SCU_KEY_CONTROL_REG) = 0; /* lock SCU */
+#endif
 
     /* arch number */
     gd->bd->bi_arch_number = 900; //MACH_TYPE_ASPEED;
@@ -272,14 +273,6 @@ int misc_init_r(void)
 #ifdef	CONFIG_PCI
     pci_init ();
 #endif
-
-	if ((*((volatile ulong*) 0x1e6e202c) & (1 << 12)) != 0) {
-	    printf("Serial DIV(%ld*13): %d\n", CONFIG_SYS_NS16550_CLK, (CONFIG_SYS_NS16550_CLK + (gd->baudrate * (MODE_X_DIV / 2))) /
-			(MODE_X_DIV * gd->baudrate * 13));
-	} else {
-	    printf("Serial DIV: %d\n", (CONFIG_SYS_NS16550_CLK + (gd->baudrate * (MODE_X_DIV / 2))) /
-			(MODE_X_DIV * gd->baudrate ));
-        }
 
     if (getenv ("verify") == NULL) {
 	setenv ("verify", "n");
