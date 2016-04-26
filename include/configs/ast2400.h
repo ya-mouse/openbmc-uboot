@@ -101,7 +101,7 @@
 	"rootfs_start=14300000\0" \
 	"rootfs_size=D00000\0"
 
-#define CONFIG_MACH_TYPE	0x232c
+#define CONFIG_MACH_TYPE	900
 
 #define CONFIG_MENUKEY	27
 #define CONFIG_BOOTDELAY	5		/* autoboot after 3 seconds	*/
@@ -214,7 +214,7 @@
 
 #   define CONFIG_ENV_IS_IN_FLASH		1
 #   define CONFIG_ENV_OFFSET		 0x030000 /* (CONFIG_SYS_FLASH_BASE+CONFIG_MONITOR_LEN)	 environment starts here  */
-#   define CONFIG_ENV_SIZE		(0x002000 - 4)	/* Total Size of Environment Sector */
+#   define CONFIG_ENV_SIZE		 0x010000	/* Total Size of Environment Sector */
 # endif
 
 #endif
