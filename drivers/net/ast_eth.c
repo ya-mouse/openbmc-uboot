@@ -556,6 +556,15 @@ static void ast_eth_halt(struct eth_device* dev)
     ast_eth_write_reg(dev, reg, MACCR_REG); /* Disable the TX and/or RX */
 }
 
+static int ast_eth_write_hwaddr(struct eth_device* dev)
+{
+    ast_eth_write_reg(dev, ((dev->enetaddr[2] << 24) | (dev->enetaddr[3] << 16)
+             | (dev->enetaddr[4] << 8) | dev->enetaddr[5]), MAC_LADR_REG);
+    ast_eth_write_reg(dev, ((dev->enetaddr[0] << 8) | dev->enetaddr[1]), MAC_MADR_REG);
+
+    return 0;
+}
+
 int ast_eth_initialize(bd_t *bis)
 {
 	unsigned int scu_reg;
@@ -627,6 +636,7 @@ int ast_eth_initialize(bd_t *bis)
 		dev->halt = ast_eth_halt;
 		dev->send = ast_eth_send;
 		dev->recv = ast_eth_recv;
+		dev->write_hwaddr = ast_eth_write_hwaddr;
 
 		priv = (struct ast_eth_priv *) malloc(sizeof(struct ast_eth_priv));
 		priv->id = i;
