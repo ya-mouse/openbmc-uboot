@@ -241,8 +241,9 @@ static int abortboot_normal(int bootdelay)
 # endif
 				break;
 			}
+			/* 10ms */
 			udelay(10000);
-		} while (!abort && get_timer(ts) < 1000);
+		} while (!abort && get_timer(ts) < 1000000);
 
 		printf("\b\b\b%2d ", bootdelay);
 	}
