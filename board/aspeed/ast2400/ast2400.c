@@ -72,6 +72,8 @@ int board_init (void)
     /* adress of boot parameters */
     gd->bd->bi_boot_params = 0x40000100;
 
+    timer_init();
+
     return 0;
 }
 
