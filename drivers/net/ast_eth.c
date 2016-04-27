@@ -620,7 +620,7 @@ int ast_eth_initialize(bd_t *bis)
 	udelay(10 * 1000);
 
 	for (i = 0; i < use_num; i ++) {
-		dev = (struct eth_device *) malloc(sizeof(struct eth_device));
+		dev = (struct eth_device *) calloc(1, sizeof(struct eth_device));
 		sprintf(dev->name, "ast_eth%d", i);
 		dev->iobase = ast_eth_reg_addr_base[i];
 		dev->init = ast_eth_init;
