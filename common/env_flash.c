@@ -230,8 +230,7 @@ done:
 
 int env_init(void)
 {
-	debug("\n\n==(%x, %x @ %x)==%x=\n", env_ptr, env_ptr->data, ENV_SIZE, env_ptr->crc);
-	if (crc32(0, env_ptr->data, ENV_SIZE) != env_ptr->crc) {
+	if (crc32(0, env_ptr->data, ENV_SIZE) == env_ptr->crc) {
 		gd->env_addr	= (ulong)&(env_ptr->data);
 		gd->env_valid	= 1;
 		return 0;
