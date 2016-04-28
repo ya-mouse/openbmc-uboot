@@ -169,23 +169,24 @@ static void setup_enetaddr_tag(bd_t *bd)
 	params->hdr.size = tag_size (tag_enetaddr);
 
 #define GET_ENETADDR(x) \
-	dev = eth_get_dev_by_index(x); \
-	if (dev) { \
-		memcpy(params->u.enetaddr.enet ## x ## _addr, dev->enetaddr, 6); \
-		count++; \
+	do { \
+		dev = eth_get_dev_by_index(x); \
+		if (dev) { \
+			memcpy(params->u.enetaddr.enet ## x ## _addr, dev->enetaddr, 6); \
+			count++; \
+		} \
+	} while (0)
+
+	GET_ENETADDR(0);
+	if (dev) {
+		GET_ENETADDR(1);
+		if (dev) {
+			GET_ENETADDR(2);
+			if (dev) {
+				GET_ENETADDR(3);
+			}
+		}
 	}
-
-	GET_ENETADDR(0)
-
-#if defined(CONFIG_HAS_ETH1)
-	GET_ENETADDR(1)
-#endif
-#if defined(CONFIG_HAS_ETH2)
-	GET_ENETADDR(2)
-#endif
-#if defined(CONFIG_HAS_ETH3)
-	GET_ENETADDR(3)
-#endif
 
 #undef GET_ENETADDR
 
