@@ -160,6 +160,39 @@ static void setup_initrd_tag(bd_t *bd, ulong initrd_start, ulong initrd_end)
 	params = tag_next (params);
 }
 
+static void setup_enetaddr_tag(bd_t *bd)
+{
+	struct eth_device *dev;
+	unsigned long count = 0;
+
+	params->hdr.tag = ATAG_ENETADDR;
+	params->hdr.size = tag_size (tag_enetaddr);
+
+#define GET_ENETADDR(x) \
+	dev = eth_get_dev_by_index(x); \
+	if (dev) { \
+		memcpy(params->u.enetaddr.enet ## x ## _addr, dev->enetaddr, 6); \
+		count++; \
+	}
+
+	GET_ENETADDR(0)
+
+#if defined(CONFIG_HAS_ETH1)
+	GET_ENETADDR(1)
+#endif
+#if defined(CONFIG_HAS_ETH2)
+	GET_ENETADDR(2)
+#endif
+#if defined(CONFIG_HAS_ETH3)
+	GET_ENETADDR(3)
+#endif
+
+#undef GET_ENETADDR
+
+	params->u.enetaddr.enet_count = count;
+	params = tag_next (params);
+}
+
 static void setup_serial_tag(struct tag **tmp)
 {
 	struct tag *params = *tmp;
@@ -209,6 +242,8 @@ static void boot_prep_linux(bootm_headers_t *images)
 	} else if (BOOTM_ENABLE_TAGS) {
 		debug("using: ATAGS\n");
 		setup_start_tag(gd->bd);
+		if (BOOTM_ENABLE_ENETADDR_TAG)
+			setup_enetaddr_tag(gd->bd);
 		if (BOOTM_ENABLE_SERIAL_TAG)
 			setup_serial_tag(&params);
 		if (BOOTM_ENABLE_CMDLINE_TAG)

@@ -90,6 +90,7 @@
 #define CONFIG_CMDLINE_TAG	 1		/* enable passing of ATAGs	*/
 #define CONFIG_SETUP_MEMORY_TAGS 1
 #define CONFIG_INITRD_TAG	 1
+#define CONFIG_ENETADDR_TAG	 1
 #define	CONFIG_BOOTARGS 	"root=/dev/ram0 rw initrd=0x42600000,0xd00000 ramdisk_size=13312 mem=112M console=ttyS0,115200n8 rootfstype=squashfs debug verbose panic=30"
 #define CONFIG_UPDATE           "tftp 40800000 ast2300.scr; so 40800000'"
 

@@ -28,10 +28,17 @@ extern void udc_disconnect(void);
 		defined(CONFIG_CMDLINE_TAG) || \
 		defined(CONFIG_INITRD_TAG) || \
 		defined(CONFIG_SERIAL_TAG) || \
-		defined(CONFIG_REVISION_TAG)
+		defined(CONFIG_REVISION_TAG) || \
+		defined(CONFIG_ENETADDR_TAG)
 # define BOOTM_ENABLE_TAGS		1
 #else
 # define BOOTM_ENABLE_TAGS		0
+#endif
+
+#ifdef CONFIG_ENETADDR_TAG
+# define BOOTM_ENABLE_ENETADDR_TAG	1
+#else
+# define BOOTM_ENABLE_ENETADDR_TAG	0
 #endif
 
 #ifdef CONFIG_SETUP_MEMORY_TAGS
