@@ -35,7 +35,7 @@ int board_init (void)
     }
 
     /* arch number */
-//    gd->bd->bi_arch_number = MACH_TYPE_ASPEED;
+    gd->bd->bi_arch_number = 900; // MACH_TYPE_ASPEED;
                                                                                                                              
     /* adress of boot parameters */
     gd->bd->bi_boot_params = 0x40000100;
