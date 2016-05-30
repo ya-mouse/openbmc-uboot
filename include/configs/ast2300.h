@@ -90,6 +90,7 @@
 #define CONFIG_CMDLINE_TAG	 1		/* enable passing of ATAGs	*/
 #define CONFIG_SETUP_MEMORY_TAGS 1
 #define CONFIG_INITRD_TAG	 1
+#define CONFIG_ENETADDR_TAG	 1
 #define	CONFIG_BOOTARGS 	"root=/dev/ram0 rw initrd=0x42600000,0xd00000 ramdisk_size=13312 mem=112M console=ttyS0,115200n8 rootfstype=squashfs debug verbose panic=30"
 #define CONFIG_UPDATE           "tftp 40800000 ast2300.scr; so 40800000'"
 
@@ -213,7 +214,7 @@
 
 #   define CONFIG_ENV_IS_IN_FLASH		1
 #   define CONFIG_ENV_OFFSET		 0x030000 /* (CONFIG_SYS_FLASH_BASE+CONFIG_MONITOR_LEN)	 environment starts here  */
-#   define CONFIG_ENV_SIZE		(0x002000 - 4)	/* Total Size of Environment Sector */
+#   define CONFIG_ENV_SIZE		 0x010000	/* Total Size of Environment Sector */
 # endif
 
 #endif
@@ -252,7 +253,7 @@
  */
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
-#define CONFIG_SYS_NS16550_REG_SIZE	-4
+#define CONFIG_SYS_NS16550_REG_SIZE	(-4)
 #define	CONFIG_SYS_NS16550_MEM32	1
 #define CONFIG_SYS_NS16550_CLK		24000000
 #define CONFIG_SYS_NS16550_COM1		0x1e783000
